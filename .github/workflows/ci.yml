@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }} - ${{ matrix.toolchain }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable, beta]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo check
+        run: cargo check --all-targets
+
+      - name: Run test suite
+        run: cargo test --verbose
+
+      - name: Run example - ring_lwe_keygen
+        run: cargo run --example ring_lwe_keygen
+
+      - name: Run example - zk_snark_prove_verify
+        run: cargo run --example zk_snark_prove_verify
+
+      - name: Run CLI inspect
+        run: cargo run -- inspect
+
+      - name: Run CLI verify
+        run: cargo run -- verify
